@@ -8,7 +8,7 @@ import opensmile
 
 from tqdm.notebook import tqdm
 from .base import BaseClassificationModel
-from .data_prep import BaseAudioSignalDataset
+from data_prehandling.data_prep import BaseAudioSignalDataset
 
 
 class TimeAttention(nn.Module):
@@ -17,7 +17,7 @@ class TimeAttention(nn.Module):
 
     Input: `tokens` with the shape (`batch_size`, `time_dim`, `features_dim`)
 
-    `w` is a parameter tensor of shape (`features_dim`, `features_dim`) 
+    `w` is a parameter tensor of shape (`features_dim`, `features_dim`)
 
     Output shape is (`batch_size`, `features_dim`)
     This module works somehow like the following:
@@ -52,7 +52,7 @@ class FeatureAttention(nn.Module):
 
     Input: `tokens` with the shape (`batch_size`, `time_dim`, `features_dim`)
 
-    `w`, `v` are parameter tensor of shape (`features_dim`, `features_dim`) 
+    `w`, `v` are parameter tensor of shape (`features_dim`, `features_dim`)
 
     Output shape is (`batch_size`, `features_dim`)
     This module works somehow like the following:
@@ -155,5 +155,5 @@ class AttentionLSTM_Classifier(BaseClassificationModel):
         ], 1)
 
         x = self.classifier(x)
-        
+
         return x

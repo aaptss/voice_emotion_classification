@@ -11,6 +11,8 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from torchmetrics import F1Score, Accuracy  #TODO
 from torch.utils.data import Dataset, DataLoader
 
+from .Convent_lstm_model import LSTM_for_baseline, CNN_for_audio
+
 
 class BaseClassificationModel(pl.LightningModule):
     """
@@ -28,6 +30,7 @@ class BaseClassificationModel(pl.LightningModule):
 
         self.loss_fn = nn.CrossEntropyLoss()
 
+        self.model = LSTM_for_baseline(66150, 1, num_layers=1, num_classes=10, dropout=0)
         #TODO get validation metrics
         self.f1 = F1Score()
         self.val_accuracy = Accuracy()
@@ -44,9 +47,10 @@ class BaseClassificationModel(pl.LightningModule):
         self.log("train_loss", loss, on_step=True)
 
         return loss
-    
+
     def validation_step(self, batch:tuple, batch_idx:int) -> torch.Tensor:
         x, ctx, label = batch
+        print(x.shape, x.shape)
         logits = self(x, ctx)
         loss = self.loss_fn(logits, label)
 
@@ -60,14 +64,18 @@ class BaseClassificationModel(pl.LightningModule):
 
     def predict_step(self, batch:tuple, batch_idx: int) -> torch.Tensor:
         x, ctx = batch
-        logits = self(x, ctx)
+        print(x.shape, x.shape)
+        logits = self.S(x, ctx)
         preds = torch.argmax(logits, -1)
         return preds
 
     def configure_optimizers(self):
         # default config, can be reimplemeted
-        opt = torch.optim.Adam(self.parameters())
+        opt = torch.optim.Adam(self.model.parameters())
         return opt
+
+    def forward(self, x, ctx):
+        return self.model(x, ctx)
 
 def train(model:pl.LightningModule, train_dataloader, val_dataloader, max_epochs=100, **trainer_kwargs):
     log_dir = os.path.join("./logs/", type(model).__name__)
@@ -82,6 +90,7 @@ def train(model:pl.LightningModule, train_dataloader, val_dataloader, max_epochs
                          max_epochs=max_epochs,
                          check_val_every_n_epoch=5,
                          callbacks=[LearningRateMonitor(), checkpoint_callback],
+                         accelerator="gpu",
                          **trainer_kwargs)
 
     trainer.fit(model, train_dataloader, val_dataloader)
